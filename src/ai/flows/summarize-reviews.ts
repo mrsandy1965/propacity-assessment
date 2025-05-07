@@ -30,7 +30,12 @@ const SummarizeReviewsOutputSchema = z.object({
 export type SummarizeReviewsOutput = z.infer<typeof SummarizeReviewsOutputSchema>;
 
 export async function summarizeReviews(input: SummarizeReviewsInput): Promise<SummarizeReviewsOutput> {
-  return summarizeReviewsFlow(input);
+  try {
+    return await summarizeReviewsFlow(input);
+  } catch (error) {
+    console.error('Error in summarizeReviews:', error);
+    throw new Error('Failed to summarize reviews. Please try again later.');
+  }
 }
 
 const prompt = ai.definePrompt({
@@ -59,7 +64,15 @@ const summarizeReviewsFlow = ai.defineFlow(
     outputSchema: SummarizeReviewsOutputSchema,
   },
   async input => {
-    const {output} = await prompt(input);
-    return output!;
+    try {
+      const {output} = await prompt(input);
+      if (!output) {
+        throw new Error('No output received from the AI model');
+      }
+      return output;
+    } catch (error) {
+      console.error('Error in summarizeReviewsFlow:', error);
+      throw new Error('Failed to generate summary. Please try again later.');
+    }
   }
 );
